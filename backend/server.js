@@ -1,7 +1,7 @@
-// /backend/server.js
 import express from "express";
 import path from "path";
 import { fileURLToPath } from "url";
+import OpenAI from "openai";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname  = path.dirname(__filename);
@@ -9,65 +9,53 @@ const __dirname  = path.dirname(__filename);
 const app  = express();
 const PORT = process.env.PORT || 3000;
 
-/* ✅ Your Render env var is named exactly 'ledger1' */
-const API_KEY      = process.env.ledger1;
-const MODEL        = process.env.LEDGER_MODEL   || "gpt-5";
-const PROVIDER_URL = process.env.LEDGER_API_URL || "https://api.openai.com/v1/chat/completions";
+/* ✅ Your Render env var name */
+const API_KEY = process.env.ledger1;               // <-- must exist in Render
+const MODEL   = process.env.LEDGER_MODEL || "gpt-5"; // set to a valid model
 
 if (!API_KEY) {
-  console.warn("⚠️  Env var 'ledger1' is missing. Set it in Render → Environment.");
+  console.error("❌ Missing env var: ledger1");
 }
+
+const openai = new OpenAI({ apiKey: API_KEY });
 
 app.use(express.json());
 
-/* ---- Serve UI from the repo root (index.html is NOT inside /backend) ---- */
-const UI_DIR = path.join(__dirname, "..");  // go up one level to the repo root
-app.use(express.static(UI_DIR));            // serve static assets from root
-app.get("/", (_req, res) => {
-  res.sendFile(path.join(UI_DIR, "index.html"));
-});
+/* Serve the UI (index.html is in the SAME folder as server.js per your screenshot) */
+app.use(express.static(__dirname));
+app.get("/", (_req, res) => res.sendFile(path.join(__dirname, "index.html")));
 
-/* ---- Chat API ---- */
+/* Chat endpoint */
 app.post("/api/chat", async (req, res) => {
   try {
     const { message } = req.body || {};
-    if (!message) return res.status(400).json({ ok:false, error:"message required" });
+    if (!message) return res.status(400).json({ ok: false, error: "message required" });
 
-    const r = await fetch(PROVIDER_URL, {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${API_KEY}`, // uses ledger1
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        model: MODEL,
-        messages: [{ role: "user", content: message }],
-        temperature: 0.2,
-        max_tokens: 500
-      })
+    const completion = await openai.chat.completions.create({
+      model: MODEL,                       // e.g., "gpt-5" / "gpt-5-mini"
+      temperature: 0.2,
+      max_tokens: 500,
+      messages: [
+        { role: "system", content: "You are a concise supply-chain copilot. Start with a one-sentence recommendation, then a brief rationale." },
+        { role: "user", content: message }
+      ]
     });
 
-    if (!r.ok) {
-      const txt = await r.text().catch(() => "");
-      return res.status(502).json({ ok:false, error:`upstream ${r.status} ${txt}` });
-    }
+    const reply = completion.choices?.[0]?.message?.content?.trim() || "";
+    if (!reply) return res.status(502).json({ ok: false, error: "No content from OpenAI" });
 
-    const data  = await r.json();
-    const reply = data?.choices?.[0]?.message?.content?.trim?.() || "…";
-    res.json({ ok:true, reply });
-  } catch (e) {
-    console.error(e);
-    res.status(500).json({ ok:false, error:e.message });
+    res.json({ ok: true, reply });
+  } catch (err) {
+    console.error("OpenAI error:", err?.response?.data || err.message || err);
+    // Bubble a readable error to the UI so you’re not stuck with "..."
+    res.status(502).json({ ok: false, error: err?.response?.data || err.message || "Upstream error" });
   }
 });
 
-/* Fallback so routes like /anything still load the app (prevents "Cannot GET /") */
-app.get("*", (_req, res) => {
-  res.sendFile(path.join(UI_DIR, "index.html"));
-});
+/* SPA fallback so you never see "Cannot GET /" */
+app.get("*", (_req, res) => res.sendFile(path.join(__dirname, "index.html")));
 
 app.listen(PORT, () => {
   console.log(`✅ Ledger listening on :${PORT}`);
-  console.log(`✅ Serving UI from: ${UI_DIR}`);
 });
 
