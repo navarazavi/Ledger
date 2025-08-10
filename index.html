@@ -4,68 +4,90 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>Ledger.</title>
-<link rel="preconnect" href="https://fonts.googleapis.com" />
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400&display=swap" rel="stylesheet">
 <style>
   :root{
     --bg:#0b0b0c;
     --text:#e9eaec;
     --muted:#a6a6ac;
-    --bubble:#a53731;
+    --bubble:#a53731;          /* red chat bubble */
     --bubbleText:#fff3f3;
-    --pill:#2b2a2b;
+    --pill:#2b2a2b;            /* input pill */
     --pillBorder:rgba(255,255,255,.06);
     --arrow:#c9cbd2;
     --shadow:0 8px 22px rgba(0,0,0,.35);
   }
+
   *{box-sizing:border-box}
   html,body{height:100%}
   body{
-    margin:0; background:var(--bg); color:var(--text);
-    font:15px/1.45 Inter, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    margin:0;
+    background:var(--bg);
+    color:var(--text);
+    font:15px/1.45 "SF Pro Text", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   }
+
   .wrap{height:100%; position:relative; overflow:hidden}
 
-  /* Header */
+  /* ===== Header ===== */
   .brand-wrap{
     position:fixed; top:18px; left:22px; right:22px;
     z-index:5; user-select:none;
   }
-  .brand{ font-weight:400; font-size:28px; letter-spacing:.1px }
+  .brand{
+    font-weight:400;           /* NOT bold */
+    font-size:28px;            /* larger, as requested */
+    letter-spacing:.1px;
+  }
   .brand-line{
-    margin-top:6px; height:1px; width:100%;
-    background:rgba(255,255,255,.2);  /* thinner & less opaque */
+    margin-top:6px;
+    height:1px;
+    width:100%;                /* full width */
+    background:rgba(255,255,255,.18);  /* thinner & less opaque */
   }
 
-  main{height:100%; display:flex; align-items:center; justify-content:center; padding:20px}
+  main{
+    height:100%;
+    display:flex; align-items:center; justify-content:center;
+    padding:20px;
+  }
 
-  /* Red bubble (smaller) */
+  /* ===== Red greeting bubble (smaller) ===== */
   .bubble{
-    position:absolute; top:74px; left:22px;   /* aligns with header */
+    position:absolute; top:106px; left:22px;   /* more space below line + aligned left */
     background:var(--bubble); color:var(--bubbleText);
-    padding:8px 12px; border-radius:14px; box-shadow:var(--shadow);
-    max-width:420px; font-weight:400; font-size:14px; white-space:pre-wrap;
+    padding:7px 11px;                           /* tighter padding */
+    border-radius:14px; box-shadow:var(--shadow);
+    max-width:420px;
+    font-weight:400; font-size:13.5px;          /* smaller text */
+    white-space:pre-wrap;
   }
 
-  /* Input pill */
+  /* ===== Composer (smaller) ===== */
   .composer{
     position:absolute; left:50%; transform:translateX(-50%);
-    bottom:86px; width:min(680px, 88vw);
-    background:var(--pill); border:1px solid var(--pillBorder);
-    border-radius:999px; padding:8px 12px; box-shadow:var(--shadow);
-    display:flex; align-items:center; gap:10px;
+    bottom:86px;
+    width:min(560px, 84vw);                     /* narrower overall */
+    background:var(--pill);
+    border:1px solid var(--pillBorder);
+    border-radius:999px;
+    padding:6px 10px;                           /* shorter height */
+    box-shadow:var(--shadow);
+    display:flex; align-items:center; gap:8px;
   }
   .composer input{
-    flex:1; background:transparent; border:none; outline:none; color:var(--text);
-    font:15px Inter, sans-serif;
+    flex:1;
+    background:transparent; border:none; outline:none; color:var(--text);
+    font:14px "SF Pro Text", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   }
   .composer input::placeholder{ color:var(--muted) }
 
-  /* Larger arrow-in-circle */
+  /* ===== Larger arrow-in-circle send ===== */
   .send{
-    width:42px; height:42px; border-radius:50%;
+    width:40px; height:40px; border-radius:50%;
     border:1px solid rgba(255,255,255,.10);
-    background:#3a393a; display:grid; place-items:center; cursor:pointer;
+    background:#3a393a;
+    display:grid; place-items:center;
+    cursor:pointer;
   }
   .send svg{ width:22px; height:22px }
   .send path{
@@ -77,8 +99,8 @@
   @media (max-width:640px){
     .brand-wrap{ top:14px; left:14px; right:14px }
     .brand{ font-size:24px }
-    .bubble{ top:66px; left:14px; right:14px; font-size:13px }
-    .composer{ bottom:64px; width:92vw }
+    .bubble{ top:96px; left:14px; right:14px; font-size:13px }
+    .composer{ bottom:64px; width:90vw }
   }
 </style>
 </head>
@@ -155,4 +177,5 @@
 </script>
 </body>
 </html>
+
 
