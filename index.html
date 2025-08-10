@@ -11,7 +11,7 @@
     --bg:#0b0b0c;
     --text:#e9eaec;
     --muted:#a6a6ac;
-    --bubble:#a53731;      /* red bubble */
+    --bubble:#a53731;
     --bubbleText:#fff3f3;
     --pill:#2b2a2b;
     --pillBorder:rgba(255,255,255,.06);
@@ -27,22 +27,24 @@
   .wrap{height:100%; position:relative; overflow:hidden}
 
   /* Header */
-  .brand-wrap{ position:fixed; top:18px; left:18px; right:18px; z-index:5; user-select:none }
-  .brand{ font-weight:400; font-size:22px; letter-spacing:.1px }
+  .brand-wrap{
+    position:fixed; top:18px; left:22px; right:22px;
+    z-index:5; user-select:none;
+  }
+  .brand{ font-weight:400; font-size:28px; letter-spacing:.1px }
   .brand-line{
-    margin-top:4px; height:1px;
-    background:rgba(255,255,255,.6);  /* full-width line */
-    width:100%;
+    margin-top:6px; height:1px; width:100%;
+    background:rgba(255,255,255,.2);  /* thinner & less opaque */
   }
 
   main{height:100%; display:flex; align-items:center; justify-content:center; padding:20px}
 
-  /* Red bubble */
+  /* Red bubble (smaller) */
   .bubble{
-    position:absolute; top:74px; left:22px;
+    position:absolute; top:74px; left:22px;   /* aligns with header */
     background:var(--bubble); color:var(--bubbleText);
-    padding:10px 14px; border-radius:14px; box-shadow:var(--shadow);
-    max-width:420px; font-weight:400; white-space:pre-wrap;
+    padding:8px 12px; border-radius:14px; box-shadow:var(--shadow);
+    max-width:420px; font-weight:400; font-size:14px; white-space:pre-wrap;
   }
 
   /* Input pill */
@@ -59,20 +61,23 @@
   }
   .composer input::placeholder{ color:var(--muted) }
 
-  /* Bigger arrow-in-circle */
+  /* Larger arrow-in-circle */
   .send{
-    width:36px; height:36px; border-radius:50%;
+    width:42px; height:42px; border-radius:50%;
     border:1px solid rgba(255,255,255,.10);
     background:#3a393a; display:grid; place-items:center; cursor:pointer;
   }
-  .send svg{ width:18px; height:18px }
-  .send path{ fill:none; stroke:var(--arrow); stroke-width:2; stroke-linecap:round; stroke-linejoin:round }
+  .send svg{ width:22px; height:22px }
+  .send path{
+    fill:none; stroke:var(--arrow); stroke-width:2.4;
+    stroke-linecap:round; stroke-linejoin:round;
+  }
   .send:disabled{ opacity:.6; cursor:not-allowed }
 
   @media (max-width:640px){
     .brand-wrap{ top:14px; left:14px; right:14px }
-    .brand{ font-size:20px }
-    .bubble{ top:66px; left:14px; right:14px }
+    .brand{ font-size:24px }
+    .bubble{ top:66px; left:14px; right:14px; font-size:13px }
     .composer{ bottom:64px; width:92vw }
   }
 </style>
@@ -91,7 +96,7 @@
       <form class="composer" id="composer">
         <input id="q" type="text" placeholder="Ask anything …" autocomplete="off" />
         <button class="send" id="send" type="submit" aria-label="Send">
-          <!-- larger upward arrow -->
+          <!-- arrow (not a play icon) -->
           <svg viewBox="0 0 24 24" aria-hidden="true">
             <path d="M12 17 V7 M8.5 10.5 L12 7 L15.5 10.5" />
           </svg>
@@ -101,6 +106,7 @@
   </div>
 
 <script>
+  /* Mock mode by default. Set API_BASE to your backend later. */
   const API_BASE = "";
   const CHAT_URL = API_BASE ? `${API_BASE}/chat` : null;
 
@@ -109,14 +115,13 @@
   const bubble = document.getElementById('bubble');
   const sendBtn = document.getElementById('send');
 
-  // Typewriter effect
+  // Typewriter greeting
   const greeting = "Hi! How can I help today?";
   let i = 0;
   function typeWriter() {
     if (i < greeting.length) {
-      bubble.textContent += greeting.charAt(i);
-      i++;
-      setTimeout(typeWriter, 50); // speed in ms
+      bubble.textContent += greeting.charAt(i++);
+      setTimeout(typeWriter, 50);
     }
   }
   window.addEventListener('DOMContentLoaded', typeWriter);
