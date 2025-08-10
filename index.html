@@ -33,22 +33,21 @@
     position:fixed; top:18px; left:22px; right:22px;
     z-index:5; user-select:none;
   }
-  .brand{ font-weight:400; font-size:35px; letter-spacing:.1px } /* 35px as requested */
+  .brand{ font-weight:400; font-size:35px; letter-spacing:.1px }
   .brand-line{
-    margin-top:2px;                     /* moved up (tighter) */
-    height:1px; width:100%;
-    background:rgba(255,255,255,.18);   /* thin & low opacity */
+    margin-top:2px; height:1px; width:100%;
+    background:rgba(255,255,255,.18);
   }
 
   /* ===== Messages area ===== */
   .log{
-    position:absolute; left:22px; right:22px; top:98px; bottom:150px; /* sits a bit higher */
+    position:absolute; left:22px; right:22px; top:98px; bottom:150px;
     overflow:auto; display:flex; flex-direction:column; gap:14px; padding-right:2px;
   }
   .msg{
     display:inline-block;
     max-width:420px;
-    padding:7px 11px;                   /* same feel as red bubble */
+    padding:7px 11px;
     border-radius:14px;
     box-shadow:var(--shadow);
     font-weight:400; font-size:13.5px;
@@ -69,35 +68,26 @@
   /* ===== Slimmer composer ===== */
   .composer{
     position:absolute; left:50%; transform:translateX(-50%);
-    bottom:72px;                            /* a touch higher off the bottom */
-    width:min(520px, 84vw);                 /* narrower */
-    background:var(--pill);
-    border:1px solid var(--pillBorder);
-    border-radius:999px;
-    padding:5px 10px;                       /* shorter height */
+    bottom:72px; width:min(520px, 84vw);
+    background:var(--pill); border:1px solid var(--pillBorder);
+    border-radius:999px; padding:5px 10px;
     box-shadow:var(--shadow);
     display:flex; align-items:center; gap:8px;
   }
   .composer input{
-    flex:1;
-    background:transparent; border:none; outline:none; color:var(--text);
+    flex:1; background:transparent; border:none; outline:none; color:var(--text);
     font:14px "SF Pro Text", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   }
   .composer input::placeholder{ color:var(--muted) }
 
-  /* ===== Arrow-in-circle send (compact but clear) ===== */
+  /* ===== Arrow-in-circle send ===== */
   .send{
     width:36px; height:36px; border-radius:50%;
     border:1px solid rgba(255,255,255,.10);
-    background:#3a393a;
-    display:grid; place-items:center;
-    cursor:pointer;
+    background:#3a393a; display:grid; place-items:center; cursor:pointer;
   }
   .send svg{ width:20px; height:20px }
-  .send path{
-    fill:none; stroke:var(--arrow); stroke-width:2.4;
-    stroke-linecap:round; stroke-linejoin:round;
-  }
+  .send path{ fill:none; stroke:var(--arrow); stroke-width:2.4; stroke-linecap:round; stroke-linejoin:round }
   .send:disabled{ opacity:.6; cursor:not-allowed }
 
   @media (max-width:640px){
@@ -110,31 +100,22 @@
 </head>
 <body>
   <div class="wrap">
-    <!-- Header -->
     <div class="brand-wrap">
       <div class="brand">Ledger.</div>
       <div class="brand-line"></div>
     </div>
 
-    <!-- Messages -->
     <div class="log" id="log"></div>
 
-    <!-- Composer -->
     <form class="composer" id="composer">
       <input id="q" type="text" placeholder="Ask anything …" autocomplete="off" />
       <button class="send" id="send" type="submit" aria-label="Send">
-        <svg viewBox="0 0 24 24" aria-hidden="true">
-          <path d="M12 17 V7 M8.5 10.5 L12 7 L15.5 10.5" />
-        </svg>
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 17 V7 M8.5 10.5 L12 7 L15.5 10.5" /></svg>
       </button>
     </form>
   </div>
 
 <script>
-  /* Mock mode by default. Set API_BASE to your backend later. */
-  const API_BASE = "";
-  const CHAT_URL = API_BASE ? `${API_BASE}/chat` : null;
-
   const form   = document.getElementById('composer');
   const q      = document.getElementById('q');
   const log    = document.getElementById('log');
@@ -144,12 +125,11 @@
     const div = document.createElement('div');
     div.className = `msg ${who}`;
     log.appendChild(div);
-    div.textContent = text;               // immediate for 'me'; bot will type if we call typer
+    div.textContent = text;
     log.scrollTop = log.scrollHeight;
     return div;
   }
 
-  // Typewriter for bot bubbles (all)
   function typeWriterBubble(text){
     const div = addBubble("", 'bot');
     let i = 0;
@@ -162,7 +142,7 @@
     })();
   }
 
-  // Greeting
+  // greeting
   window.addEventListener('DOMContentLoaded', ()=>{
     typeWriterBubble("Hi! How can I help today?");
   });
@@ -173,24 +153,16 @@
     if (!text) return;
     q.value = ""; q.focus(); sendBtn.disabled = true;
 
-    // user bubble (right side)
-    const me = addBubble(text, 'me');
-
-    if (!CHAT_URL){
-      await new Promise(r=>setTimeout(r,600));
-      typeWriterBubble("🔧 API not connected yet. This is a mock response.");
-      sendBtn.disabled = false; 
-      return;
-    }
+    addBubble(text, 'me'); // user bubble
 
     try{
-      const r = await fetch(CHAT_URL, {
+      const r = await fetch("/api/chat", {             // << same origin
         method:'POST',
         headers:{'Content-Type':'application/json'},
         body: JSON.stringify({ message: text })
       });
-      const data = await r.json();
-      typeWriterBubble(data?.reply || '…');
+      const data = await r.json().catch(()=>({}));
+      typeWriterBubble(data?.reply || "…");
     }catch{
       typeWriterBubble("Oops—server error. Try again.");
     }finally{
