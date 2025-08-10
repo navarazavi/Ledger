@@ -9,9 +9,9 @@
     --bg:#0b0b0c;
     --text:#e9eaec;
     --muted:#a6a6ac;
-    --bubble:#a53731;          /* red chat bubble */
+    --bubble:#a53731;          /* bot (red) */
     --bubbleText:#fff3f3;
-    --pill:#2b2a2b;            /* input pill */
+    --pill:#2b2a2b;            /* input pill + user bubble */
     --pillBorder:rgba(255,255,255,.06);
     --arrow:#c9cbd2;
     --shadow:0 8px 22px rgba(0,0,0,.35);
@@ -33,50 +33,50 @@
     position:fixed; top:18px; left:22px; right:22px;
     z-index:5; user-select:none;
   }
-  .brand{
-    font-weight:400;           /* NOT bold */
-    font-size:28px;            /* larger, as requested */
-    letter-spacing:.1px;
-  }
-  .brand-line{
-    margin-top:6px;
-    height:1px;
-    width:100%;                /* full width */
-    background:rgba(255,255,255,.18);  /* thinner & less opaque */
-  }
+  .brand{ font-weight:400; font-size:28px; letter-spacing:.1px }
+  .brand-line{ margin-top:6px; height:1px; width:100%; background:rgba(255,255,255,.18) }
 
-  main{
-    height:100%;
-    display:flex; align-items:center; justify-content:center;
-    padding:20px;
-  }
+  main{height:100%; display:block; padding:20px}
 
-  /* ===== Red greeting bubble (smaller) ===== */
-  .bubble{
-    position:absolute; top:106px; left:22px;   /* more space below line + aligned left */
-    background:var(--bubble); color:var(--bubbleText);
-    padding:7px 11px;                           /* tighter padding */
-    border-radius:14px; box-shadow:var(--shadow);
+  /* ===== Messages area ===== */
+  .log{
+    position:absolute; left:22px; right:22px; top:106px; bottom:160px;
+    overflow:auto; display:flex; flex-direction:column; gap:14px; padding-right:2px;
+  }
+  .msg{
     max-width:420px;
-    font-weight:400; font-size:13.5px;          /* smaller text */
-    white-space:pre-wrap;
+    padding:7px 11px;
+    border-radius:14px;
+    box-shadow:var(--shadow);
+    font-weight:400; font-size:13.5px;
+    white-space:pre-wrap; word-wrap:break-word;
+  }
+  .msg.bot{
+    align-self:flex-start;
+    background:var(--bubble);
+    color:var(--bubbleText);
+  }
+  .msg.me{
+    align-self:flex-end;
+    background:var(--pill);     /* same color as input pill */
+    color:var(--text);
+    border:1px solid var(--pillBorder);
   }
 
   /* ===== Composer (smaller) ===== */
   .composer{
     position:absolute; left:50%; transform:translateX(-50%);
     bottom:86px;
-    width:min(560px, 84vw);                     /* narrower overall */
+    width:min(560px, 84vw);
     background:var(--pill);
     border:1px solid var(--pillBorder);
     border-radius:999px;
-    padding:6px 10px;                           /* shorter height */
+    padding:6px 10px;
     box-shadow:var(--shadow);
     display:flex; align-items:center; gap:8px;
   }
   .composer input{
-    flex:1;
-    background:transparent; border:none; outline:none; color:var(--text);
+    flex:1; background:transparent; border:none; outline:none; color:var(--text);
     font:14px "SF Pro Text", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   }
   .composer input::placeholder{ color:var(--muted) }
@@ -99,7 +99,7 @@
   @media (max-width:640px){
     .brand-wrap{ top:14px; left:14px; right:14px }
     .brand{ font-size:24px }
-    .bubble{ top:96px; left:14px; right:14px; font-size:13px }
+    .log{ top:96px; left:14px; right:14px; bottom:140px }
     .composer{ bottom:64px; width:90vw }
   }
 </style>
@@ -113,12 +113,16 @@
     </div>
 
     <main aria-label="Chat canvas">
-      <div class="bubble" id="bubble"></div>
+      <!-- messages appear here -->
+      <div class="log" id="log">
+        <!-- greeting bubble gets typed into this first bot message -->
+        <div class="msg bot" id="greet"></div>
+      </div>
 
+      <!-- composer -->
       <form class="composer" id="composer">
         <input id="q" type="text" placeholder="Ask anything …" autocomplete="off" />
         <button class="send" id="send" type="submit" aria-label="Send">
-          <!-- arrow (not a play icon) -->
           <svg viewBox="0 0 24 24" aria-hidden="true">
             <path d="M12 17 V7 M8.5 10.5 L12 7 L15.5 10.5" />
           </svg>
@@ -132,17 +136,28 @@
   const API_BASE = "";
   const CHAT_URL = API_BASE ? `${API_BASE}/chat` : null;
 
-  const form = document.getElementById('composer');
-  const q = document.getElementById('q');
-  const bubble = document.getElementById('bubble');
-  const sendBtn = document.getElementById('send');
+  const form   = document.getElementById('composer');
+  const q      = document.getElementById('q');
+  const log    = document.getElementById('log');
+  const greet  = document.getElementById('greet');
+  const sendBtn= document.getElementById('send');
 
-  // Typewriter greeting
+  // Utility to append a bubble
+  function addBubble(text, who='bot'){
+    const div = document.createElement('div');
+    div.className = `msg ${who}`;
+    div.textContent = text;
+    log.appendChild(div);
+    log.scrollTop = log.scrollHeight;
+    return div;
+  }
+
+  // Typewriter greeting into the first bot bubble
   const greeting = "Hi! How can I help today?";
   let i = 0;
   function typeWriter() {
     if (i < greeting.length) {
-      bubble.textContent += greeting.charAt(i++);
+      greet.textContent += greeting.charAt(i++);
       setTimeout(typeWriter, 50);
     }
   }
@@ -153,13 +168,18 @@
     const text = q.value.trim();
     if (!text) return;
     q.value = ""; q.focus(); sendBtn.disabled = true;
-    bubble.textContent = text;
+
+    // user bubble (right side, pill color)
+    addBubble(text, 'me');
 
     if (!CHAT_URL){
+      // mock a short delay, then bot reply
       await new Promise(r=>setTimeout(r,600));
-      bubble.textContent = "🔧 API not connected yet. This is a mock response.";
-      sendBtn.disabled = false; return;
+      addBubble("🔧 API not connected yet. This is a mock response.", 'bot');
+      sendBtn.disabled = false; 
+      return;
     }
+
     try{
       const r = await fetch(CHAT_URL, {
         method:'POST',
@@ -167,9 +187,9 @@
         body: JSON.stringify({ message: text })
       });
       const data = await r.json();
-      bubble.textContent = data?.reply || '…';
+      addBubble(data?.reply || '…', 'bot');
     }catch{
-      bubble.textContent = "Oops—server error. Try again.";
+      addBubble("Oops—server error. Try again.", 'bot');
     }finally{
       sendBtn.disabled = false;
     }
