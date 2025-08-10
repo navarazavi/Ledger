@@ -11,7 +11,7 @@
     --muted:#a6a6ac;
     --bot:#a53731;            /* bot (red) */
     --botText:#fff3f3;
-    --pill:#2b2a2b;           /* input pill + user bubble */
+    --pill:#2b2a2b;           /* input + user bubble */
     --pillBorder:rgba(255,255,255,.06);
     --arrow:#c9cbd2;
     --shadow:0 8px 22px rgba(0,0,0,.35);
@@ -33,18 +33,22 @@
     position:fixed; top:18px; left:22px; right:22px;
     z-index:5; user-select:none;
   }
-  .brand{ font-weight:400; font-size:33px; letter-spacing:.1px }
-  .brand-line{ margin-top:4px; height:1px; width:100%; background:rgba(255,255,255,.18) }
+  .brand{ font-weight:400; font-size:35px; letter-spacing:.1px } /* 35px as requested */
+  .brand-line{
+    margin-top:2px;                     /* moved up (tighter) */
+    height:1px; width:100%;
+    background:rgba(255,255,255,.18);   /* thin & low opacity */
+  }
 
   /* ===== Messages area ===== */
   .log{
-    position:absolute; left:22px; right:22px; top:106px; bottom:160px;
+    position:absolute; left:22px; right:22px; top:98px; bottom:150px; /* sits a bit higher */
     overflow:auto; display:flex; flex-direction:column; gap:14px; padding-right:2px;
   }
   .msg{
-    display:inline-block;            /* <-- ensures natural bubble width */
+    display:inline-block;
     max-width:420px;
-    padding:7px 11px;
+    padding:7px 11px;                   /* same feel as red bubble */
     border-radius:14px;
     box-shadow:var(--shadow);
     font-weight:400; font-size:13.5px;
@@ -62,15 +66,15 @@
     border:1px solid var(--pillBorder);
   }
 
-  /* ===== Composer (small) ===== */
+  /* ===== Slimmer composer ===== */
   .composer{
     position:absolute; left:50%; transform:translateX(-50%);
-    bottom:86px;
-    width:min(560px, 84vw);
+    bottom:72px;                            /* a touch higher off the bottom */
+    width:min(520px, 84vw);                 /* narrower */
     background:var(--pill);
     border:1px solid var(--pillBorder);
     border-radius:999px;
-    padding:6px 10px;
+    padding:5px 10px;                       /* shorter height */
     box-shadow:var(--shadow);
     display:flex; align-items:center; gap:8px;
   }
@@ -81,15 +85,15 @@
   }
   .composer input::placeholder{ color:var(--muted) }
 
-  /* ===== Larger arrow-in-circle send ===== */
+  /* ===== Arrow-in-circle send (compact but clear) ===== */
   .send{
-    width:44px; height:44px; border-radius:50%;
+    width:36px; height:36px; border-radius:50%;
     border:1px solid rgba(255,255,255,.10);
     background:#3a393a;
     display:grid; place-items:center;
     cursor:pointer;
   }
-  .send svg{ width:22px; height:22px }
+  .send svg{ width:20px; height:20px }
   .send path{
     fill:none; stroke:var(--arrow); stroke-width:2.4;
     stroke-linecap:round; stroke-linejoin:round;
@@ -98,9 +102,9 @@
 
   @media (max-width:640px){
     .brand-wrap{ top:14px; left:14px; right:14px }
-    .brand{ font-size:24px }
-    .log{ top:96px; left:14px; right:14px; bottom:140px }
-    .composer{ bottom:64px; width:90vw }
+    .brand{ font-size:30px }
+    .log{ top:92px; left:14px; right:14px; bottom:132px }
+    .composer{ bottom:58px; width:92vw }
   }
 </style>
 </head>
@@ -112,19 +116,18 @@
       <div class="brand-line"></div>
     </div>
 
-    <main aria-label="Chat canvas">
-      <div class="log" id="log"></div>
+    <!-- Messages -->
+    <div class="log" id="log"></div>
 
-      <!-- composer -->
-      <form class="composer" id="composer">
-        <input id="q" type="text" placeholder="Ask anything …" autocomplete="off" />
-        <button class="send" id="send" type="submit" aria-label="Send">
-          <svg viewBox="0 0 24 24" aria-hidden="true">
-            <path d="M12 17 V7 M8.5 10.5 L12 7 L15.5 10.5" />
-          </svg>
-        </button>
-      </form>
-    </main>
+    <!-- Composer -->
+    <form class="composer" id="composer">
+      <input id="q" type="text" placeholder="Ask anything …" autocomplete="off" />
+      <button class="send" id="send" type="submit" aria-label="Send">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M12 17 V7 M8.5 10.5 L12 7 L15.5 10.5" />
+        </svg>
+      </button>
+    </form>
   </div>
 
 <script>
@@ -140,8 +143,8 @@
   function addBubble(text, who='bot'){
     const div = document.createElement('div');
     div.className = `msg ${who}`;
-    div.textContent = text;           // set text immediately
     log.appendChild(div);
+    div.textContent = text;               // immediate for 'me'; bot will type if we call typer
     log.scrollTop = log.scrollHeight;
     return div;
   }
@@ -170,8 +173,8 @@
     if (!text) return;
     q.value = ""; q.focus(); sendBtn.disabled = true;
 
-    // USER bubble (right side, pill color)
-    addBubble(text, 'me');
+    // user bubble (right side)
+    const me = addBubble(text, 'me');
 
     if (!CHAT_URL){
       await new Promise(r=>setTimeout(r,600));
